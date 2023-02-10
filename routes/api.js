@@ -68,7 +68,9 @@ module.exports = function (app) {
     .get(async function (req, res){
       try {
         let bookid = req.params.id;
-        //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
+        //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]};
+        let filter = await books.findById(bookid);
+        if (!filter) {throw new Error()};
         let result = await books.aggregate([
           {$match: {_id: mongoose.Types.ObjectId(`${bookid}`)}},
           {$project: {
@@ -77,7 +79,7 @@ module.exports = function (app) {
             comments: 1,
             commentcount: {$size: "$comments"}
           }}
-        ]);
+        ])
         res.json(result[0]);
 
       } catch (err) {
@@ -91,11 +93,12 @@ module.exports = function (app) {
         let comment = req.body.comment;
         if (comment == '' || comment == undefined) {return res.send('missing required field comment')}
         //json res format same as .get
-        await books.findOneAndUpdate(
-          {_id : bookid},
+        let filter = await books.findByIdAndUpdate(
+          bookid,
           {$push: {comments: comment}},
           {new: true}
         );
+        if (!filter) {throw new Error()};
         let result = await books.aggregate([
           {$match: { _id: mongoose.Types.ObjectId(`${bookid}`)}},
           {$project: {
@@ -116,7 +119,8 @@ module.exports = function (app) {
       try {
         let bookid = req.params.id;
         //if successful response will be 'delete successful'
-        await books.findOneAndDelete({ _id: bookid })
+        let result = await books.findByIdAndDelete(bookid)
+        if (!result) {throw new Error()};
         res.send('delete successful');
 
       } catch (err) {

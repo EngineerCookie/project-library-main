@@ -17,7 +17,7 @@ suite('Functional Tests', function() {
   /*
   * ----[EXAMPLE TEST]----
   * Each test should completely test the response of the API end-point including response status code!
-  */
+
   test('#example Test GET /api/books', function(done){
      chai.request(server)
       .get('/api/books')
@@ -47,8 +47,6 @@ suite('Functional Tests', function() {
           assert.equal(res.type, 'application/json');
           assert.equal(res.body.title, "testing book");
           globalId = res.body._id;
-          console.log("from post:");
-          console.log(globalId)
           done();
         });
       });
@@ -104,8 +102,6 @@ suite('Functional Tests', function() {
         chai.request(server)
         .get(`/api/books/${globalId}`)
         .end((err, res) => {
-          console.log('from get')
-          console.log(globalId);
           assert.equal(res.status, 200);
           assert.equal(res.type, 'application/json');
           assert.property(res.body, 'title', 'Books in array should contain title');
