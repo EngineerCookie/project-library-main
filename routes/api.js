@@ -44,7 +44,6 @@ module.exports = function (app) {
     })
     
     .post(async function (req, res){
-      console.log(req.body.title)
       try {
         let title = req.body.title;
         //response will contain new book object including atleast _id and title
@@ -67,46 +66,62 @@ module.exports = function (app) {
 
   app.route('/api/books/:id')
     .get(async function (req, res){
-      let bookid = req.params.id;
-      //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
-      let result = await books.aggregate([
-        {$match: {_id: mongoose.Types.ObjectId(`${bookid}`)}},
-        {$project: {
-          _id: 1,
-          title: 1,
-          comments: 1,
-          commentcount: {$size: "$comments"}
-        }}
-      ]);
-      res.json(result[0]);
+      try {
+        let bookid = req.params.id;
+        //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
+        let result = await books.aggregate([
+          {$match: {_id: mongoose.Types.ObjectId(`${bookid}`)}},
+          {$project: {
+            _id: 1,
+            title: 1,
+            comments: 1,
+            commentcount: {$size: "$comments"}
+          }}
+        ]);
+        res.json(result[0]);
+
+      } catch (err) {
+        res.send('no book exists');
+      }
     })
     
     .post(async function(req, res){
-      let bookid = req.params.id;
-      let comment = req.body.comment;
-      //json res format same as .get
-      await books.findOneAndUpdate(
-        {_id : bookid},
-        {$push: {comments: comment}},
-        {new: true}
-      );
-      let result = await books.aggregate([
-        {$match: { _id: mongoose.Types.ObjectId(`${bookid}`)}},
-        {$project: {
-          _id: 1,
-          title: 1,
-          comments: 1,
-          commentcount: {$size: "$comments"}
-        }}
-      ]);
-      res.json(result);
+      try {
+        let bookid = req.params.id;
+        let comment = req.body.comment;
+        if (comment == '' || comment == undefined) {return res.send('missing required field comment')}
+        //json res format same as .get
+        await books.findOneAndUpdate(
+          {_id : bookid},
+          {$push: {comments: comment}},
+          {new: true}
+        );
+        let result = await books.aggregate([
+          {$match: { _id: mongoose.Types.ObjectId(`${bookid}`)}},
+          {$project: {
+            _id: 1,
+            title: 1,
+            comments: 1,
+            commentcount: {$size: "$comments"}
+          }}
+        ]);
+        res.json(result[0]);
+
+      } catch (err) {
+        res.send('no book exists')
+      }
     })
     
     .delete(async function(req, res){
-      let bookid = req.params.id;
-      //if successful response will be 'delete successful'
-      await books.findOneAndDelete({ _id: bookid })
-      res.send('delete successful')
+      try {
+        let bookid = req.params.id;
+        //if successful response will be 'delete successful'
+        await books.findOneAndDelete({ _id: bookid })
+        res.send('delete successful');
+
+      } catch (err) {
+        res.send('no book exists');
+      }
     });
   
 };
